@@ -7,14 +7,19 @@ module ShiftCareCLI
 
     def self.run(args)
       command = args.first
+      clients = fetch_clients
 
       case command
       when 'search'
-        run_search(args[1..].join(' '))
+        query = args[1..].join(' ').strip
+        if query.empty?
+          puts "Please provide a search query."
+        else
+          run_search(clients, query)
+        end
       when 'duplicate_email'
-        run_duplicate_email_check
+        run_duplicate_email_check(clients)
       when nil
-        clients = fetch_clients
         puts "Total clients loaded: #{clients.size}"
       else
         puts "Unknown command: '#{command}'"
@@ -24,21 +29,15 @@ module ShiftCareCLI
 
     def self.fetch_clients
       puts "Fetching client data..."
-      json_data = ShiftCareCLI::FetchClientData.fetch(CLIENTS_API_URL)
-      json_data.map { |client_data| ShiftCareCLI::Client.new(client_data) }
+      json_data = FetchClientData.fetch(CLIENTS_API_URL)
+      json_data.map { |client_data| Client.new(client_data) }
     rescue => e
       puts "Failed to fetch clients: #{e.message}"
       exit(1)
     end
 
-    def self.run_search(query)
-      if query.strip.empty?
-        puts "Please provide a search query."
-        return
-      end
-
-      clients = fetch_clients
-      results = ShiftCareCLI::Client.search_by_name(clients, query)
+    def self.run_search(clients, query)
+      results = Client.search_by_name(clients, query)
 
       if results.empty?
         puts "No clients found for '#{query}'."
@@ -48,9 +47,8 @@ module ShiftCareCLI
       end
     end
 
-    def self.run_duplicate_email_check
-      clients = fetch_clients
-      duplicates = ShiftCareCLI::Client.find_duplicates(clients)
+    def self.run_duplicate_email_check(clients)
+      duplicates = Client.find_duplicates(clients)
 
       if duplicates.empty?
         puts "No duplicate emails found."
