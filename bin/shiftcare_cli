@@ -1,10 +1,50 @@
 require_relative '../lib/shiftcare_cli/fetch_client_data'
 require_relative '../lib/shiftcare_cli/client'
+require_relative '../lib/shiftcare_cli/client_searcher'
 
-url = 'https://appassets02.shiftcare.com/manual/clients.json'
+module ShiftCareCLI
+  class CLI
+    CLIENTS_API_URL = 'https://appassets02.shiftcare.com/manual/clients.json'
 
-puts "Fetching Clients Data"
-json_data = ShiftCareCLI::FetchClientData.fetch(url)
-clients = json_data.map { |client_data| ShiftCareCLI::Client.new(client_data) }
+    def self.run(args)
+      command = args.first
 
-puts "Clients: #{clients}, total: #{clients.count}"
+      case command
+      when 'search'
+        query = args[1..].join(' ')
+        run_search(query)
+      when nil
+        clients = fetch_clients
+        puts "Total clients loaded: #{clients.size}"
+      else
+        puts "Unknown command: '#{command}'"
+      end
+    end
+
+    def self.fetch_clients
+      puts "Fetching client data..."
+      json_data = ShiftCareCLI::FetchClientData.fetch(CLIENTS_API_URL)
+      json_data.map { |client_data| ShiftCareCLI::Client.new(client_data) }
+    rescue => e
+      puts "Failed to fetch clients: #{e.message}"
+      exit(1)
+    end
+
+    def self.run_search(query)
+      clients = fetch_clients
+      searcher = ShiftCareCLI::ClientSearcher.new(clients)
+      results = searcher.search_by_name(query)
+
+      if results.empty?
+        puts "No clients found for '#{query}'."
+      else
+        puts "Found #{results.size} client(s):"
+        results.each do |client|
+          puts "#{client.full_name} (#{client.email})"
+        end
+      end
+    end
+  end
+end
+
+ShiftCareCLI::CLI.run(ARGV)
