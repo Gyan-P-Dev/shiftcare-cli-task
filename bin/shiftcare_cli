@@ -1,0 +1,10 @@
+require_relative '../lib/shiftcare_cli/fetch_client_data'
+require_relative '../lib/shiftcare_cli/client'
+
+url = 'https://appassets02.shiftcare.com/manual/clients.json'
+
+puts "Fetching Clients Data"
+json_data = ShiftCareCLI::FetchClientData.fetch(url)
+clients = json_data.map { |client_data| ShiftCareCLI::Client.new(client_data) }
+
+puts "Clients: #{clients}, total: #{clients.count}"
