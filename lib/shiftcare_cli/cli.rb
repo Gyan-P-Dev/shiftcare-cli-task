@@ -14,8 +14,8 @@ module ShiftCareCLI
       case command
       when 'search'
         field = args[1]
-        query = args[2..].join(' ').strip
-
+        query = (args[2..] || []).join(' ').strip
+      
         if field.nil? || query.empty?
           puts "Usage: search <field> <query>"
           puts "Available fields: full_name, email"

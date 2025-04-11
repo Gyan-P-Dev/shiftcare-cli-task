@@ -32,6 +32,14 @@ RSpec.describe ShiftCareCLI::CLI do
       end
     end
 
+    context 'when search command is missing arguments' do
+      it 'prints usage instructions without error' do
+        expect {
+          described_class.run(['search'])
+        }.to output(/Usage: search <field> <query>/).to_stdout
+      end
+    end
+
     context 'duplicate_email command' do
       it 'prints duplicate emails found' do
         expect {
